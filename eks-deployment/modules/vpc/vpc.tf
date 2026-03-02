@@ -20,6 +20,7 @@ module "vpc" {
 resource "aws_security_group" "vpc_endpoints" {
   name_prefix = "${var.environment_name}-vpc-endpoints-"
   description = "Security group for VPC endpoints"
+  vpc_id      = module.vpc.vpc_id
   
   ingress {
     description = "HTTPS from VPC"
@@ -56,6 +57,7 @@ module "vpc_endpoints" {
     # ECR API - Interface endpoint
     ecr_api = {
       service             = "ecr.api"
+      service_type        = "Interface"
       private_dns_enabled = true
       subnet_ids          = module.vpc.private_subnets
       tags                = { Name = "${var.environment_name}-ecr-api-endpoint" }
@@ -64,6 +66,7 @@ module "vpc_endpoints" {
     # ECR DKR - Interface endpoint
     ecr_dkr = {
       service             = "ecr.dkr"
+      service_type        = "Interface"
       private_dns_enabled = true
       subnet_ids          = module.vpc.private_subnets
       tags                = { Name = "${var.environment_name}-ecr-dkr-endpoint" }
@@ -72,6 +75,7 @@ module "vpc_endpoints" {
     # EC2 - Interface endpoint
     ec2 = {
       service             = "ec2"
+      service_type        = "Interface"
       private_dns_enabled = true
       subnet_ids          = module.vpc.private_subnets
       tags                = { Name = "${var.environment_name}-ec2-endpoint" }
@@ -79,14 +83,25 @@ module "vpc_endpoints" {
     # EKS - Interface Endpoint
     eks = {
       service             = "eks"
+      service_type        = "Interface"
       private_dns_enabled = true
       subnet_ids          = module.vpc.private_subnets
       tags                = { Name = "${var.environment_name}-eks-endpoint" }
     }
     sts = {
       service             = "sts"
+      service_type        = "Interface"
       private_dns_enabled = true
       subnet_ids          = module.vpc.private_subnets
+      tags                = { Name = "${var.environment_name}-sts-endpoint" }
+    }
+    
+    # S3 - Gateway endpoint (required for ECR image layers)
+    s3 = {
+      service         = "s3"
+      service_type    = "Gateway"
+      route_table_ids = module.vpc.private_route_table_ids
+      tags            = { Name = "${var.environment_name}-s3-endpoint" }
     }
   }
 }
